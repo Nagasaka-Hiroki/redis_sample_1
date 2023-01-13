@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  redis:
+    container_name: redis
+    image: redis:bullseye
+    restart: "no"
+    tty: true
+    networks:
+      redis_network:
+        ipv4_address: 172.21.0.2
+networks:
+  redis_network:
+    name: redis_network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
