@@ -118,7 +118,7 @@ ports:
 文法自体は簡単である。なぜならほとんどjavascriptと同じなので。なんどかjavascriptを書いたことがあったのでその点は問題ない。  
 難しい点は、nodejsが非常にプレーンな機能であるからだ。Railsであればコマンドでおおよその基本機能の土台を提供してくれる。しかしnode.jsは現状そういったところがなさそう。そのため基本的な知識がかなり必要になる。当然なれている人にとってはよいことだが、現状の私には難しいところがある。しかしこれも勉強であるため調べながら解決することにする。
 
-## Node.jsでサーバを作成。
+## Node.jsでサーバを作成
 　Node.jsの練習（Hello, world!)が済んだので、websocketサーバを作る。
 
 package.jsonを作成し"type":"module"を追加する。package.json自体はnpm initでEnterを連打して生成した。  
@@ -206,7 +206,80 @@ $ curl http://localhost:3000
 - [response.write(chunk[, encoding][, callback])｜HTTP｜Node.js v18.13.0 Documentation](https://nodejs.org/dist/latest-v18.x/docs/api/http.html#responsewritechunk-encoding-callback)
 - [response.writeHead(statusCode[, statusMessage][, headers])｜HTTP｜Node.js v18.13.0 Documentation](https://nodejs.org/dist/latest-v18.x/docs/api/http.html#responsewriteheadstatuscode-statusmessage-headers)
 
+以下のサイトはcssまで適応する内容を書いてくれている。
+- [第3回「Node.js入門」htmlファイルを表示　node.js – ページ 4 – 優しいPHPとHTML5](https://testtesttest21.sakura.ne.jp/wp/2018/06/06/%e7%ac%ac3%e5%9b%9e%e3%80%8cnode-js%e5%85%a5%e9%96%80%e3%80%8dhtml%e3%83%95%e3%82%a1%e3%82%a4%e3%83%ab%e3%82%92%e8%a1%a8%e7%a4%ba%e3%80%80node-js/4/)
 
+とりあえず、今回の主眼はwebsocketなのでこのへんでソースとしてファイルが認識されていない点は無視する。
+
+次はjavascriptファイルを読み込む。
+
+単純にscriptタグをつけると読み込まれるのはhtmlファイルだった。そのためURLによって返すファイルを変える設定を追加する。
+
+なお、javascript（scriptタグで設定したもの）をリクエストしたときのURLは以下。
+
+```
+http://localhost:3000/console_write.js
+```
+
+nodejsのURLについては以下。
+- [URL｜Node.js v18.13.0 Documentation](https://nodejs.org/dist/latest-v18.x/docs/api/url.html#url-strings-and-url-objects)
+
+以下の構成でjavascriptが使えるようになった。
+
+```js
+//必要なモジュールをロードする。
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+
+//サーバを作成
+const server = http.createServer((req, res)=>{
+    //ファイルを開くためにパスを作る。
+    let file_name = "."+req.url;
+    //もしルートでアクセスされた場合、index.htmlを返す
+    if (req.url==="/") {
+        file_name = "./index.html";
+    } else if (req.url==="/favicon.ico") {
+        //faviconは作っていないが、これで停止されると困るので200で返す。
+        res.writeHead(200,{"Content-Type":"text/plain"});
+        res.write("/favicon.ico is not defined.\n");
+        res.end();
+        return;
+    }
+    //ファイルパスを取得しファイルを読み込む。拡張子の種類によってヘッダを変える。
+    fs.readFile(file_name,'utf-8',(err,data)=>{
+        const ext_format = path.extname(req.url);
+        if (ext_format===".html") {
+            res.writeHead(200,{'Content-Type':'text/html'});
+        } else if (ext_format===".js"){
+            res.writeHead(200,{'Content-Type':'text/javascript'});
+        }
+        //レスポンスボディの内容は共通
+        res.write(data);
+        res.end();
+    });
+});
+
+//3000番ポートで受け付ける。
+server.listen(3000);
+```
+
+上記の状態はリクエストしたURLによってきちんと返す内容を変更している。こうするとjavascriptファイルを読み込むことができる。javascriptの読み込みはajax通信だと思っていたが通常のhttpリクエストで処理されていた。そのためnodejs側でもindex.htmlと同様の処理で対応できた。ajaxについては後日しっかりと確認しておく。今回は主眼ではないので除外する。
+
+サーバサイドスクリプトを上記のようにしクライアントサイドスクリプトを以下のように設定した（index.htmlのscriptタグに読み込むように追加している）。
+
+```js
+console.log('hello world!');
+```
+
+この状態でサーバを起動してコンソールを確認した結果。`hello world!`と表示されていた。
+
+よって、上記までで以下の項目を実現できた。
+
+1. URLのパスに指定されたソースを種類に応じてレスポンスできる
+1. クライアント側でjavascriptの実行が可能になった。
+
+故に、次はwebsocketを導入し双方向通信の実現をやってみる。
 
 ---
 
