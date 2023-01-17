@@ -63,3 +63,4 @@ Node.jsコンテナに関しては以下。
 |ディレクトリ|学習目標・項目|
 |-|-|
 |no1_redis_basic|Redisコンテナを使って操作の基本を練習|
+|no2_websocket|Node.jsコンテナを使ってWebsocketサーバを作る|

@@ -5,6 +5,8 @@ services:
     image: redis:bullseye
     restart: "no"
     tty: true
+    ports:
+      - 6379:6379
     networks:
       redis_network:
         ipv4_address: 172.21.0.2
