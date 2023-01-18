@@ -119,6 +119,7 @@ ports:
 難しい点は、nodejsが非常にプレーンな機能であるからだ。Railsであればコマンドでおおよその基本機能の土台を提供してくれる。しかしnode.jsは現状そういったところがなさそう。そのため基本的な知識がかなり必要になる。当然なれている人にとってはよいことだが、現状の私には難しいところがある。しかしこれも勉強であるため調べながら解決することにする。
 
 ## Node.jsでサーバを作成
+### Node.js単体で作成
 　Node.jsの練習（Hello, world!)が済んだので、websocketサーバを作る。
 
 package.jsonを作成し"type":"module"を追加する。package.json自体はnpm initでEnterを連打して生成した。  
@@ -290,3 +291,192 @@ console.log('hello world!');
 - [オブジェクト · JavaScript Primer #jsprimer](https://jsprimer.net/basic/object/)
 
 ---
+
+## Node.jsでWebsocketサーバを作成
+　通常のサーバは完成したはず（リクエストした結果が返されるのでサーバと呼べるはず。）。  
+　そのためWebsocketをjavascriptで作って動作させる。
+
+websocketのライブラリは以下。
+- [websocket - npm](https://www.npmjs.com/package/websocket)
+- [ws - npm](https://www.npmjs.com/package/ws)
+
+上記の２つだが、１つ目は更新が２年前なので、２つ目を使う。２つ目は１０日前になっている。
+
+以下のコマンドでインストールする。
+
+```bash
+npm i ws
+```
+
+---
+
+小ネタ
+- [JavaScript とは - ウェブ開発を学ぶ｜MDN](https://developer.mozilla.org/ja/docs/Learn/JavaScript/First_steps/What_is_JavaScript)  
+これによれば`<script defer>`とすると全体を読み込んだ後にスクリプトを読み込むことができる。
+
+---
+
+wsのドキュメントは以下。
+- [ws/ws.md at a3214d31b63acee8e31065be9f5ce3dd89203055 · websockets/ws · GitHub](https://github.com/websockets/ws/blob/HEAD/doc/ws.md)
+
+このライブラリには大きく２つのクラスがある。種類と用途をまとめると以下の通りだと思われる。
+
+|クラス名|用途|
+|-|-|
+|WebSocket|クライアントサイドの挙動を定義|
+|WebSocketServer|サーバサイドの挙動を定義|
+
+あくまで推測だが、使用例を読んでいるとそんな感じがした。
+
+また、javascript自体にwebsocketがあるので、それと混同しないように注意する。以下に示す。
+- [WebSocket - Web API｜MDN](https://developer.mozilla.org/ja/docs/Web/API/WebSocket)
+
+まず、使用例を参考にサーバ側とクライアント側の実装を試す。
+
+以下のエラーが出る。
+
+```
+Uncaught ReferenceError: require is not defined
+```
+
+おそらくnode_mmodulesがブラウザ側にないからだと思われる。javascriptがリクエストされたときに一緒に飛ばす。
+
+- [for...of - JavaScript｜MDN](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Statements/for...of)
+
+ディレクトリの中の一覧がほしい。以下を読んだ。
+- [node.js 指定したディレクトリの配下にあるディレクトリやフォルダを取得する｜mebee](https://mebee.info/2021/01/03/post-24355/)
+
+上記によれば`readdir`を使うそう。
+
+- [指定したパスがディレクトリかどうか調べる - まくまくNode.jsノート](https://maku77.github.io/nodejs/io/is-directory.html)
+
+ファイルか？ディレクトリかの判定は`isDirectory`が使えるそうだ。
+
+うっかりミスをしていた。同じことをしている人がいたのでメモ。
+- [javascript - Unhandled rejection TypeError: path.extname is not a function - Stack Overflow](https://stackoverflow.com/questions/40692358/unhandled-rejection-typeerror-path-extname-is-not-a-function)
+
+
+`node_module`がないとメソッドを呼び出せない。そのためブラウザ側に`node_module`を配置する。リクエストを発行できるのはクライアントだけなので、javascriptで`node_module`を読み込む。一度fetch apiで試したが、ソースにうまく配置されていなかったので、XMLHttpRequestを使って取得する。
+
+- [XMLHttpRequest.open() - Web API｜MDN](https://developer.mozilla.org/ja/docs/Web/API/XMLHttpRequest/open)
+- [XMLHttpRequest の使用 - Web API｜MDN](https://developer.mozilla.org/ja/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest)
+- [XMLHttpRequest.setRequestHeader() - Web API｜MDN](https://developer.mozilla.org/ja/docs/Web/API/XMLHttpRequest/setRequestHeader)
+- [XMLHttpRequest - Web API｜MDN](https://developer.mozilla.org/ja/docs/Web/API/XMLHttpRequest)
+- [サーバーからのデータ取得 - ウェブ開発を学ぶ｜MDN](https://developer.mozilla.org/ja/docs/Learn/JavaScript/Client-side_web_APIs/Fetching_data)
+- [厳格モード - JavaScript｜MDN](https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Strict_mode)
+- [モジュール, 導入](https://ja.javascript.info/modules-intro)
+
+xhrは使わなくても良かった。以下のようにすれば良いと感じる。
+
+```html
+<!-- html file -->
+<script type="module" src="./websocket.js" defer></script>
+```
+```js
+// javascript file
+import WebSocket from './node_modules/ws';
+```
+
+認識の間違い。node.jsはあくまでサーバサイドスクリプトなのでクライアントで使える（使えなくはないと思うが）わけではないと思う。  
+そのため、今の主眼はwebsocketサーバを立てることなので、`node_module`をクライアント側に送信する操作は今は考えない。  
+→クライアントはjavascript標準のwebsocketを使う。  
+→クライアントで使うためには`node_module`をクライアントに配置しないといけない。→これができていないので必要に応じて調べる
+
+---
+
+小ネタ。
+
+nodejsでファイルを開くときに書いたものをメモする。
+
+```js
+//node_modulesを返す。
+function get_node_modules(dir_path){
+    fs.readdir(dir_path,(err,files)=>{
+        for (const item of files) {
+            fs.stat(dir_path+"/"+item,(err,stats)=>{
+                if (stats.isDirectory()){
+                    get_node_modules(dir_path+"/"+item);
+                } else {
+                    const file_ext = path.extname(item);
+                    if (file_ext===".js"){
+                        fs.readFile(dir_path+"/"+item,'utf-8',(err,data)=>{
+                            console.log(data);
+                        });
+                    }
+                }
+            });
+        }
+    });
+}
+```
+
+---
+
+### Expressフレームワークを使う。
+　Nodejs単体で作るのは、やっていて難しい。単純なサーバであれば作ることができたが、WebSocketサーバはうまく行かなかった。そのため一旦フレームワークを試してみようと思う。以下に示す。
+
+- [Express - Node.js Web アプリケーション・フレームワーク](https://expressjs.com/ja/)
+- [GitHub - expressjs/express: Fast, unopinionated, minimalist web framework for node.](https://github.com/expressjs/express)
+- [【Express】Node.js 人気No.1フレームワーク とは｜Hisamacho Engineer Blog](https://yu-teck.com/programming/express/what-is-express/)
+
+Expressは小さい機能と高いカスタマイズ性。その反面、多くの知識が必要。といった特徴があるそうだ。そこまで大きいプログラムを作る予定はないことと、基礎を学ぶことが目的であるため今回のケース的に良いと感じるため採用する。
+
+インストールをする。
+- [Express のインストール](https://expressjs.com/ja/starter/installing.html)
+
+まずは単純なhttpサーバを作る。
+- [Express の「Hello World」の例](https://expressjs.com/ja/starter/hello-world.html)
+- [GitHub - expressjs/express: Fast, unopinionated, minimalist web framework for node.](https://github.com/expressjs/express)
+
+上記を例にする。
+
+とりあえずHello world。
+
+```js
+const express = require('express');
+const app = express();
+
+app.get('/',(req,res)=>{
+    res.send("Hello, World!\n");
+});
+app.listen(3000);
+```
+
+#### httpサーバの作成
+静的なhtmlファイルを返す様に設定するには以下。
+
+ファイルを、`./public/index.html`にはいちする。その後`http://localhost:3000/index.html`にアクセスする。
+
+```js
+const express = require('express');
+const app = express();
+
+app.use(express.static(__dirname+'/public'))
+app.listen(3000);
+```
+
+→OK。
+
+次はjavascriptのインクルードを試す。
+
+1. `assets/js/hello.js`を配置する。
+1. `<script src="./assets/js/hello.js"></script>`をヘッダに追加。
+
+読み込みがうまく行かないので以下参考。
+- [Express4 jadeからのjsファイル読み込みにハマる。 - かもメモ](https://chaika.hatenablog.com/entry/2015/10/30/083000)
+
+以下のように設定すると、nodejs単体で作ったときとほどんど同じ動作になる。
+
+```js
+const express = require('express');
+const app = express();
+
+app.use(express.static('public'));
+app.use('/assets',express.static(__dirname+'/assets'));
+app.listen(3000);
+```
+
+コードの量がかなり圧縮できた。
+
+とりあえず、単純なhttpサーバはできたはず。次はwebsocketサーバを作る。
+
