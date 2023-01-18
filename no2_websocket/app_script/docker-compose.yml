@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  nodejs:
+    container_name: nodejs
+    image: node:18.13.0-bullseye
+    user: node
+    working_dir: /home/node/redis_app
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/node/redis_app
+    restart: "no"
+    tty: true
+    ports:
+      - 3000:3000
+    expose:
+      - 3000
+    networks:
+      redis_network:
+        ipv4_address: 172.21.0.3
+networks:
+  redis_network:
+    name: redis_network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
