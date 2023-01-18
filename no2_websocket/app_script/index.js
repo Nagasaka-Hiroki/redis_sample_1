@@ -2,7 +2,6 @@
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
-const ws = require('ws');
 
 //サーバを作成
 const server = http.createServer((req, res)=>{
@@ -34,16 +33,3 @@ const server = http.createServer((req, res)=>{
 });
 //3000番ポートで受け付ける。
 server.listen(3000);
-
-//websocketサーバを作成する。
-const wss = new ws.WebSocketServer({ port: 3030 });
-
-wss.on('connection',(websocket)=>{
-    /*
-    websocket.on('message',(data)=>{
-        console.log("received: %s",data);
-    });
-    websocket.send('something');
-    */
-   console.log("connected!");
-});
