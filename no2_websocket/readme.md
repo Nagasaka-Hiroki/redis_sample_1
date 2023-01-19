@@ -480,7 +480,107 @@ app.listen(3000);
 
 とりあえず、単純なhttpサーバはできたはず。次はwebsocketサーバを作る。
 
-#### WebSocketサーバの作成
+---
 
+小ネタ。  
 app.onはExpressにあった。ということはWebSocketはExpressに依存している？  
-→
+→依存関係を調べた。以下に示す。
+
+- [express-ws - npm](https://www.npmjs.com/package/express-ws?activeTab=readme)  
+とりあえず無関係ではなさそう。
+
+読み込み方については以下。
+- [jsのimportとrequireの違い - Qiita](https://qiita.com/minato-naka/items/39ecc285d1e37226a283)
+
+---
+
+#### WebSocketサーバの作成
+　時間がかかり過ぎなので以下の内容をもう少し見る。
+- [WebsocketとRedis Pub/Sub - Qiita](https://qiita.com/satofujino/items/7bf4b99e2176f63ca7ef)
+
+書き方が参考になった点と`noServer`モードがあることがわかった。
+
+もう少し細かい内容は以下。
+- [【Node.js】WebSocketサーバ と WebSocket API を使ってチャットもどきを作ってみよう！【サンプルコードあり】｜ラッコWeb](https://don-bu-rakko.com/javascript-websocket-api/)
+
+上記の疎通確認コマンドの存在がびっくり。そんなコマンドがあったとは知らなかった。
+- [wscat - npm](https://www.npmjs.com/package/wscat)
+
+`g`オプションでインストールするのでDockerfileを使ってイメージを作り直す。
+
+とりあえず以下を実行。
+
+```bash
+$ wscat -c ws://localhost:3000
+error: Unexpected server response: 200
+```
+
+コマンドは動いたが、エラーが出た。サーバ側は以下の構成。
+
+```js
+//websocketサーバを作成する。
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({ noServer: true });
+wss.on('connection',(ws)=>{
+    ws.on('message',(data)=>{
+        console.log(data);
+    });
+    ws.send('connected!');
+});
+```
+
+下記も参考になるかもしれない。
+- [【Node.js + Express】WebSocketを使ってみる( + 全クライアントに一斉送信) - とある科学の備忘録](https://shizenkarasuzon.hatenablog.com/entry/2021/04/21/004132)
+
+
+以下の構成でうまく行った。
+
+```js
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({port: 8080});
+
+wss.on('connection',(ws)=>{
+    ws.on('message',(data)=>{
+        console.log(data);
+    });
+    ws.send('connected!');
+});
+```
+
+上記構成で、以下のコマンドを実行すると接続が確認できた。
+
+```bash
+$ wscat -c ws://localhost:8080
+Connected (press CTRL+C to quit)
+< connected!
+```
+
+やはりクライアント側で`on`が使えない。
+
+クライアント側とサーバ側のメッセージのやり取りについてまとめる。  
+→以下は誤りだと後から気づいたが、どう間違っていたかを記録するために残しておく。
+
+|種類|名称|サーバorクライアント|内容|
+|-|-|-|-|
+|メソッド|send|クライアント|サーバにデータを送信する。|
+|メソッド|send|サーバ|クライアントにデータを送信する。|
+|イベント|message|クライアント|サーバからデータを受信した時に発生する。|
+|イベント|message|サーバ|クライアントからデータが送られて来たときに発生する。|
+|イベント|connection|サーバ|コネクションが確立したときに発生する。|
+|イベント|open|クライアント|コネクションが確立したときに発生する。|
+
+- [【JavaScript】WebSocketとは？仕組みや使い方をわかりやすく解説｜アントレプレナー](https://kosuke-space.com/websocket-javascript)
+- [WebSocket.send() - Web API｜MDN](https://developer.mozilla.org/ja/docs/Web/API/WebSocket/send)
+
+上記のまとめを作って認識の間違いに気づいた。それは以下。
+- websocketでは接続に成功するとクライアントとサーバの概念がなくなる（と感じる）。
+ 
+そのため以下に示す内容に認識を変える。
+- サーバとクライアントの概念があるのは接続を確立する時（httpで確立するので）
+- サーバにはwebsocketサーバというhttpリクエストによってwebsocketによる接続を確立する処理が必要。
+- クライアントにはwebsocketによる接続を開始するための処理が必要。
+- セッションが確立するとクライアントとサーバの両方にwebsocketが生成され、それを使って双方向通信をおこなう。
+
+とりあえずコードの方もボタンでイベントを発生させて、それをサーバとクライアントで受信する様に設定した。
+
+これで、no2の目的である、websocketサーバの作成は達成できたと思う。次に進む。
