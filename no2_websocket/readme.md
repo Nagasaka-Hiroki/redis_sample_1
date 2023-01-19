@@ -480,3 +480,7 @@ app.listen(3000);
 
 とりあえず、単純なhttpサーバはできたはず。次はwebsocketサーバを作る。
 
+#### WebSocketサーバの作成
+
+app.onはExpressにあった。ということはWebSocketはExpressに依存している？  
+→
