@@ -66,3 +66,10 @@ Node.jsコンテナに関しては以下。
 |no2_websocket|Node.jsコンテナを使ってWebsocketサーバを作る|
 |no3_webdocket_with_redis|単純にRedisとWebsocketサーバをつなげる|
 |no4_simple_pubsub|Pub/Subの動作を確認する|
+|no5_complex_system|構成を複雑にする|
+
+## 学習終了
+　ひとまずno1〜no5までを完了し学習目標を達成した。しかし、以下の参考サイトを自分で再現しようと以下のサイトのコードをほとんど参考にせずに作った影響か、参考サイトのコードがよくわからない状態だ（この点はno5のreadme.mdに記述している）。  
+しかし、学習不足ではあると思うが、自分でwebsocket+redis(Pub/Sub)を使ったチャットアプリもどきを作れた。そのため最低限の学習はできていると判断し学習を終了することにした。追加学習はまたリポジトリを分けて実行する。
+
+- [WebsocketとRedis Pub/Sub - Qiita](https://qiita.com/satofujino/items/7bf4b99e2176f63ca7ef)
