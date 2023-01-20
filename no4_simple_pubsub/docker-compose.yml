@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+  wss:
+    container_name: wss
+    image: websocket_server:nodejs
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    user: node
+    working_dir: /home/node/redis_app
+    volumes:
+      - type: bind
+        source: ./express_script
+        target: /home/node/redis_app
+    restart: "no"
+    tty: true
+    ports:
+      - 3000:3000
+    expose:
+      - 3000
+    networks:
+      redis_network:
+        ipv4_address: 172.21.0.3
+    #command: node app.js
+  redis:
+    container_name: redis
+    image: redis:bullseye
+    restart: "no"
+    tty: true
+    ports:
+      - 6379:6379
+    networks:
+      redis_network:
+        ipv4_address: 172.21.0.4
+networks:
+  redis_network:
+    name: redis_network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1

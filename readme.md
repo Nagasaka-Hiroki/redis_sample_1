@@ -65,3 +65,4 @@ Node.jsコンテナに関しては以下。
 |no1_redis_basic|Redisコンテナを使って操作の基本を練習|
 |no2_websocket|Node.jsコンテナを使ってWebsocketサーバを作る|
 |no3_webdocket_with_redis|単純にRedisとWebsocketサーバをつなげる|
+|no4_simple_pubsub|Pub/Subの動作を確認する|
